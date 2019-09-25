@@ -1,0 +1,251 @@
+<html>
+
+<head>
+  <title>Socket.IO chat</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+  <style>
+    body {
+        background-image: url("https://c8.alamy.com/comp/RA0R2G/xoxo-lettering-and-heart-shape-pink-gold-balloons-on-the-cute-cream-background-with-foil-confetti-design-for-valentine-birthday-wedding-party-and-RA0R2G.jpg");
+        font-family: Arial, Helvetica, sans-serif;
+        color:palevioletred;
+        background-color: black;
+        overflow: auto;
+        scroll-behavior: smooth;
+        
+      }
+      * {box-sizing: border-box;}
+      h1{
+        font-family: cursive;
+        color:bisque;
+        text-shadow: 5px 5px black;
+        font-size: 150px;
+      }
+      h2 {
+        font-size: 50px;
+        font-family:monospace;
+        color:black;
+        margin-left: 100px;
+
+      }
+      h3 {
+        color: black;
+        font-family:monospace;
+      }
+      h4 {
+        color: black;
+      }
+
+     
+
+      .form-container {
+        max-width: 500px;
+        padding: 10px;
+        background-color: black;
+      }
+
+
+      .form-container .btn {
+        background-color: palevioletred;
+        color: white;
+        
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        margin-bottom:10px;
+        opacity: 0.8;
+      }
+
+      .form-container .btn:hover, .open-button:hover {
+        opacity: 1;
+      }
+
+
+      #username{
+        width: 80%;
+        padding: 15px 32px;
+        margin-bottom:10px;
+      }
+
+      #nickname{
+        font-size: 18px;
+      }
+      #userForm{
+        height: 200px;
+        width: 300px;
+        margin-left: 40%;
+        margin-right: 40%;
+        margin-top: 10%;
+        text-align: center;
+        background-color:antiquewhite;
+        border-radius: 10px;
+       
+      }
+
+      #ok{
+        background-color:coral;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+        width: 50%;
+        margin-bottom:10px;
+        opacity: 0.8;
+      }
+      .well{
+        color:palevioletred;
+        background-color:bisque;
+        border: 5px;
+        border-color: black;
+      }
+
+      #messageform {
+        width:60%;
+        position: absolute;
+        bottom: 10px;
+        float: right;
+      }
+      #amaquin {
+        overflow-y:scroll; 
+        width:80%; height: 500px; 
+        background-color:lavenderblush;
+        margin-left: 100px;
+        border-radius: 20px;
+      }
+      #type{
+        color: black;
+        font-size: 16px;
+      }
+    </style>
+</head>
+
+<body>
+  <center>
+    <h1> <:Yay! Chat:></h1>
+  </center>
+
+
+  <div class="container">
+
+    <div id="userFormArea" class="row">
+      <div class="col-md-12">
+        <form id="userForm">
+          <div class="form-group">
+            <br>
+            <label id="nickname">Enter a Nick-name:</label>
+            <br>
+            <br>
+            <center><input class="form-control" id="username" autocomplete="off" required autofocus></center>
+            <br>
+            <input id="ok" type="submit" class="btn btn-primary" value="Ok">
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">
+        <br>
+        <br>
+        <br>
+        <br>
+        <br>
+        <div class="well">
+          <h3>Online Users</h3>
+          <ul class="list-group" id="users"></ul>
+        </div>
+      </div>
+      <div class="col-md-8" id="divmessages">
+        <h2>Messages:</h2>
+        <div>
+          <section id="amaquin"></section>
+        </div>
+      </div>
+    </div>
+
+    <form id="messageForm">
+        <div id="type"></div>
+      <h4><label for="msg"><b>Enter a Message:</b></label></h4>
+      <input type="text" class="form-control" id="message"  autocomplete="off">
+      <br>
+      <input type="submit" class="btn btn-primary" value="Send Message">
+    </form>
+
+
+    <script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+      $(function () {
+        var socket = io.connect();
+        var messageForm = $('#messageForm');
+        var message = $('#message');
+        var userFormArea = $('#userFormArea');
+        var userForm = $('#userFormArea');
+        var users = $('#users');
+        var username = $('#username');
+        var messages = $('#divmessages');
+        var amaquin = $("#amaquin");
+        var interval = 0;
+        var myname = "";
+        
+
+
+        $(".well").hide();
+        $(messageForm).hide();
+        $(messages).hide();
+
+        messageForm.submit(function (e) {
+          e.preventDefault();
+          socket.emit('send message', message.val());
+          message.val('');
+          return false;
+        });
+
+        socket.on('typing', function (data) {
+          $("#type").remove();
+          clearInterval(interval);
+          $('#divmessages').append('<div id = "type" >' + data  + ' is typing..</div>');
+          interval = setInterval(function () {
+            $("#type").remove();
+          }, 2000);
+        })
+
+        socket.on('new message', function (data) {
+          amaquin.append('<ul class= "well" style="margin: 5 30 5 30"><strong>' + data.user + '</strong>: ' + data.msg + '</ul>')
+        });
+
+        userForm.submit(function (e) {
+          e.preventDefault();
+          myname = username.val();
+          socket.emit('new user',myname , function (data) {
+            if (data) {
+              userFormArea.hide();
+              $(".chat-popup").show();
+              $(".well").show();
+              $(messageForm).show();
+              $(messages).show();
+            }
+          });
+          username.val('');
+        });
+
+         $("#message").keydown(function () {
+          socket.emit('typing', myname);
+        })
+
+        socket.on('get users', function (data) {
+          var html = "";
+          for (i = 0; i < data.length; i++) {
+            html += '<li class = "list-group-item">' + data[i] + '</li>';
+          }
+          users.html(html);
+        });
+      });
+
+
+    </script>
+</body>
+
+</html>
